@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Institution Profile | Consultant Directory</title>
+</head>
+
+<body>
+
+    <header>
+        <p>
+            <a href="index.html">← Back to Search</a>
+        </p>
+
+        <h1 id="institutionName">
+            Loading institution...
+        </h1>
+
+        <p id="institutionType"></p>
+
+        <button
+            id="addToSpsButton"
+            type="button"
+            disabled
+        >
+            Add to SPS Clients
+        </button>
+    </header>
+
+
+    <main>
+
+        <!-- ======================================================
+             STATUS / ERROR
+        ======================================================= -->
+
+        <section id="statusSection">
+            <p id="statusMessage">
+                Loading institution profile...
+            </p>
+        </section>
+
+
+        <!-- ======================================================
+             IDENTIFIERS
+        ======================================================= -->
+
+        <section id="identifiersSection" hidden>
+
+            <h2>Identifiers</h2>
+
+            <dl>
+                <dt>DAPIP ID</dt>
+                <dd id="dapipId"></dd>
+
+                <dt>Parent DAPIP ID</dt>
+                <dd id="parentDapipId"></dd>
+
+                <dt>OPE ID</dt>
+                <dd id="opeId"></dd>
+
+                <dt>IPEDS ID</dt>
+                <dd id="ipedsId"></dd>
+            </dl>
+
+        </section>
+
+
+        <!-- ======================================================
+             INSTITUTION / LOCATION INFORMATION
+        ======================================================= -->
+
+        <section id="institutionSection" hidden>
+
+            <h2>Institution Information</h2>
+
+            <dl>
+                <dt>Location Name</dt>
+                <dd id="locationName"></dd>
+
+                <dt>Parent Institution</dt>
+                <dd id="parentName"></dd>
+
+                <dt>Location Type</dt>
+                <dd id="locationType"></dd>
+
+                <dt>Address</dt>
+                <dd id="address"></dd>
+
+                <dt>Street Address</dt>
+                <dd id="streetAddress"></dd>
+
+                <dt>City</dt>
+                <dd id="city"></dd>
+
+                <dt>State</dt>
+                <dd id="state"></dd>
+
+                <dt>ZIP Code</dt>
+                <dd id="zipCode"></dd>
+
+                <dt>ZIP + 4</dt>
+                <dd id="zipPlus4"></dd>
+
+                <dt>Address Parse Status</dt>
+                <dd id="addressParseStatus"></dd>
+
+                <dt>General Phone</dt>
+                <dd id="generalPhone"></dd>
+
+                <dt>Administrator</dt>
+                <dd id="adminName"></dd>
+
+                <dt>Administrator Phone</dt>
+                <dd id="adminPhone"></dd>
+
+                <dt>Administrator Email</dt>
+                <dd id="adminEmail"></dd>
+
+                <dt>Fax</dt>
+                <dd id="fax"></dd>
+
+                <dt>Source Update Date</dt>
+                <dd id="updateDate"></dd>
+            </dl>
+
+        </section>
+
+
+        <!-- ======================================================
+             ACCREDITATION RECORDS
+        ======================================================= -->
+
+        <section id="accreditationSection" hidden>
+
+            <h2>Accreditation Records</h2>
+
+            <p id="accreditationCount"></p>
+
+            <div id="accreditationRecords">
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================
+             ACCREDITATION ACTIONS
+        ======================================================= -->
+
+        <section id="actionsSection" hidden>
+
+            <h2>Accreditation Actions</h2>
+
+            <p id="actionsCount"></p>
+
+            <div id="accreditationActions">
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================
+             ASSOCIATED LOCATIONS AND SITES
+        ======================================================= -->
+
+        <section id="locationsSection" hidden>
+
+            <h2>Associated Locations &amp; Sites</h2>
+
+            <p id="locationsCount"></p>
+
+            <div id="associatedLocations">
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================
+             FUTURE SPS BUSINESS WORKSPACE
+        ======================================================= -->
+
+        <section id="spsSection" hidden>
+
+            <h2>Safe Passage Strategies</h2>
+
+            <p>
+                This institution has not yet been added to the SPS client workspace.
+            </p>
+
+            <p>
+                The private SPS workspace will eventually contain engagements,
+                Statements of Work, phases, projects, deliverables, documents,
+                tasks, and client portal activity.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- Supabase browser configuration -->
+    <script src="js/config.js"></script>
+
+    <!-- Institution profile application -->
+    <script src="js/profile.js"></script>
+
+</body>
+</html>

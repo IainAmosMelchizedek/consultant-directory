@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Consultant Directory</title>
+</head>
+
+<body>
+
+    <header>
+        <h1>Consultant Directory</h1>
+        <p>Postsecondary Institution Search</p>
+    </header>
+
+    <main>
+
+        <!-- ======================================================
+             SEARCH
+        ======================================================= -->
+
+        <section id="searchSection">
+
+            <h2>Search Institutions</h2>
+
+            <div>
+                <label for="institutionSearch">
+                    Institution Name, DAPIP ID, OPE ID, or IPEDS ID
+                </label>
+
+                <input
+                    type="text"
+                    id="institutionSearch"
+                    placeholder="Example: Adrian College, 122074, or 00223400"
+                >
+            </div>
+
+
+            <div>
+                <label for="stateFilter">
+                    State
+                </label>
+
+                <select id="stateFilter">
+                    <option value="">
+                        All States
+                    </option>
+                </select>
+            </div>
+
+
+            <div>
+                <label for="locationTypeFilter">
+                    Location Type
+                </label>
+
+                <select id="locationTypeFilter">
+                    <option value="" selected>
+                        All Types
+                    </option>
+
+                    <option value="Institution">
+                        Institution
+                    </option>
+
+                    <option value="Additional Location">
+                        Additional Location
+                    </option>
+
+                    <option value="Site">
+                        Site
+                    </option>
+                </select>
+            </div>
+
+
+            <div>
+                <button id="searchButton" type="button">
+                    Search
+                </button>
+
+                <button id="clearButton" type="button">
+                    Clear
+                </button>
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================
+             RESULTS SUMMARY
+        ======================================================= -->
+
+        <section id="resultsSection">
+
+            <div>
+                <h2>Search Results</h2>
+
+                <p id="resultCount">
+                    Enter a search or select a state to begin.
+                </p>
+
+                <button
+                    id="downloadButton"
+                    type="button"
+                    disabled
+                >
+                    Download Results
+                </button>
+            </div>
+
+
+            <!-- ==================================================
+                 RESULTS
+
+                 JavaScript will create one result card per
+                 institution / additional location / site.
+            =================================================== -->
+
+            <div id="resultsList">
+            </div>
+
+
+            <!-- ==================================================
+                 PAGINATION
+            =================================================== -->
+
+            <div id="pagination" hidden>
+
+                <button
+                    id="previousPageButton"
+                    type="button"
+                >
+                    Previous
+                </button>
+
+                <span id="pageStatus">
+                </span>
+
+                <button
+                    id="nextPageButton"
+                    type="button"
+                >
+                    Next
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Supabase browser configuration -->
+    <script src="js/config.js"></script>
+
+    <!-- Consultant Directory application -->
+    <script src="js/app.js"></script>
+
+</body>
+</html>
