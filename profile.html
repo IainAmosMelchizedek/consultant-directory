@@ -2,205 +2,473 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Institution Profile | Consultant Directory</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Institution Profile | Safe Passage Strategies
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/styles.css"
+    >
 </head>
 
-<body>
+<body class="profile-page">
 
-    <header>
-        <p>
-            <a href="index.html">← Back to Search</a>
-        </p>
+    <!-- ======================================================
+         HEADER
+    ======================================================= -->
 
-        <h1 id="institutionName">
-            Loading institution...
-        </h1>
+    <header class="site-header profile-site-header">
 
-        <p id="institutionType"></p>
+        <div class="header-inner">
 
-        <button
-            id="addToSpsButton"
-            type="button"
-            disabled
-        >
-            Add to SPS Clients
-        </button>
+            <div class="brand-kicker">
+                Safe Passage Strategies
+            </div>
+
+            <div class="profile-header-row">
+
+                <div class="profile-heading">
+
+                    <a
+                        class="back-link"
+                        href="index.html"
+                    >
+                        ← Back to Directory
+                    </a>
+
+                    <h1 id="institutionName">
+                        Loading institution...
+                    </h1>
+
+                    <div class="profile-type-row">
+
+                        <span
+                            id="institutionType"
+                            class="profile-type-badge"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="profile-primary-action">
+
+                    <button
+                        id="addToSpsButton"
+                        class="button sps-client-button"
+                        type="button"
+                        disabled
+                    >
+                        Add to SPS Clients
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </header>
 
 
-    <main>
+    <!-- ======================================================
+         MAIN PAGE
+    ======================================================= -->
 
-        <!-- ======================================================
-             STATUS / ERROR
-        ======================================================= -->
+    <main class="page-shell profile-shell">
 
-        <section id="statusSection">
+
+        <!-- ==================================================
+             STATUS
+        =================================================== -->
+
+        <section
+            id="statusSection"
+            class="profile-status"
+        >
             <p id="statusMessage">
                 Loading institution profile...
             </p>
         </section>
 
 
-        <!-- ======================================================
-             IDENTIFIERS
-        ======================================================= -->
+        <!-- ==================================================
+             TOP INFORMATION GRID
+        =================================================== -->
 
-        <section id="identifiersSection" hidden>
-
-            <h2>Identifiers</h2>
-
-            <dl>
-                <dt>DAPIP ID</dt>
-                <dd id="dapipId"></dd>
-
-                <dt>Parent DAPIP ID</dt>
-                <dd id="parentDapipId"></dd>
-
-                <dt>OPE ID</dt>
-                <dd id="opeId"></dd>
-
-                <dt>IPEDS ID</dt>
-                <dd id="ipedsId"></dd>
-            </dl>
-
-        </section>
+        <div class="profile-top-grid">
 
 
-        <!-- ======================================================
-             INSTITUTION / LOCATION INFORMATION
-        ======================================================= -->
+            <!-- ==============================================
+                 IDENTIFIERS
+            =============================================== -->
 
-        <section id="institutionSection" hidden>
+            <section
+                id="identifiersSection"
+                class="profile-card identifiers-card"
+                hidden
+            >
 
-            <h2>Institution Information</h2>
+                <div class="profile-card-header">
 
-            <dl>
-                <dt>Location Name</dt>
-                <dd id="locationName"></dd>
+                    <span class="section-eyebrow">
+                        Federal Identifiers
+                    </span>
 
-                <dt>Parent Institution</dt>
-                <dd id="parentName"></dd>
+                    <h2>
+                        Identifiers
+                    </h2>
 
-                <dt>Location Type</dt>
-                <dd id="locationType"></dd>
-
-                <dt>Address</dt>
-                <dd id="address"></dd>
-
-                <dt>Street Address</dt>
-                <dd id="streetAddress"></dd>
-
-                <dt>City</dt>
-                <dd id="city"></dd>
-
-                <dt>State</dt>
-                <dd id="state"></dd>
-
-                <dt>ZIP Code</dt>
-                <dd id="zipCode"></dd>
-
-                <dt>ZIP + 4</dt>
-                <dd id="zipPlus4"></dd>
-
-                <dt>Address Parse Status</dt>
-                <dd id="addressParseStatus"></dd>
-
-                <dt>General Phone</dt>
-                <dd id="generalPhone"></dd>
-
-                <dt>Administrator</dt>
-                <dd id="adminName"></dd>
-
-                <dt>Administrator Phone</dt>
-                <dd id="adminPhone"></dd>
-
-                <dt>Administrator Email</dt>
-                <dd id="adminEmail"></dd>
-
-                <dt>Fax</dt>
-                <dd id="fax"></dd>
-
-                <dt>Source Update Date</dt>
-                <dd id="updateDate"></dd>
-            </dl>
-
-        </section>
+                </div>
 
 
-        <!-- ======================================================
+                <dl class="detail-list compact-detail-list">
+
+                    <div class="detail-row">
+                        <dt>DAPIP ID</dt>
+                        <dd id="dapipId"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Parent DAPIP ID</dt>
+                        <dd id="parentDapipId"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>OPE ID</dt>
+                        <dd id="opeId"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>IPEDS ID</dt>
+                        <dd id="ipedsId"></dd>
+                    </div>
+
+                </dl>
+
+            </section>
+
+
+            <!-- ==============================================
+                 INSTITUTION INFORMATION
+            =============================================== -->
+
+            <section
+                id="institutionSection"
+                class="profile-card institution-card"
+                hidden
+            >
+
+                <div class="profile-card-header">
+
+                    <span class="section-eyebrow">
+                        Directory Record
+                    </span>
+
+                    <h2>
+                        Institution Information
+                    </h2>
+
+                </div>
+
+
+                <dl class="detail-list institution-detail-list">
+
+                    <div class="detail-row">
+                        <dt>Location Name</dt>
+                        <dd id="locationName"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Parent Institution</dt>
+                        <dd id="parentName"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Location Type</dt>
+                        <dd id="locationType"></dd>
+                    </div>
+
+                    <div class="detail-row detail-row-wide">
+                        <dt>Address</dt>
+                        <dd id="address"></dd>
+                    </div>
+
+                    <div class="detail-row detail-row-wide">
+                        <dt>Street Address</dt>
+                        <dd id="streetAddress"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>City</dt>
+                        <dd id="city"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>State</dt>
+                        <dd id="state"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>ZIP Code</dt>
+                        <dd id="zipCode"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>ZIP + 4</dt>
+                        <dd id="zipPlus4"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Address Parse Status</dt>
+                        <dd id="addressParseStatus"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>General Phone</dt>
+                        <dd id="generalPhone"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Administrator</dt>
+                        <dd id="adminName"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Administrator Phone</dt>
+                        <dd id="adminPhone"></dd>
+                    </div>
+
+                    <div class="detail-row detail-row-wide">
+                        <dt>Administrator Email</dt>
+                        <dd id="adminEmail"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Fax</dt>
+                        <dd id="fax"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Source Update Date</dt>
+                        <dd id="updateDate"></dd>
+                    </div>
+
+                </dl>
+
+            </section>
+
+        </div>
+
+
+        <!-- ==================================================
              ACCREDITATION RECORDS
-        ======================================================= -->
+        =================================================== -->
 
-        <section id="accreditationSection" hidden>
+        <section
+            id="accreditationSection"
+            class="profile-card profile-section-card"
+            hidden
+        >
 
-            <h2>Accreditation Records</h2>
+            <div class="profile-card-header profile-card-header-row">
 
-            <p id="accreditationCount"></p>
+                <div>
+                    <span class="section-eyebrow">
+                        Accreditation
+                    </span>
 
-            <div id="accreditationRecords">
+                    <h2>
+                        Accreditation Records
+                    </h2>
+                </div>
+
+                <p
+                    id="accreditationCount"
+                    class="record-count"
+                ></p>
+
+            </div>
+
+
+            <div
+                id="accreditationRecords"
+                class="profile-record-grid"
+            >
             </div>
 
         </section>
 
 
-        <!-- ======================================================
+        <!-- ==================================================
              ACCREDITATION ACTIONS
-        ======================================================= -->
+        =================================================== -->
 
-        <section id="actionsSection" hidden>
+        <section
+            id="actionsSection"
+            class="profile-card profile-section-card"
+            hidden
+        >
 
-            <h2>Accreditation Actions</h2>
+            <div class="profile-card-header profile-card-header-row">
 
-            <p id="actionsCount"></p>
+                <div>
+                    <span class="section-eyebrow">
+                        Regulatory History
+                    </span>
 
-            <div id="accreditationActions">
+                    <h2>
+                        Accreditation Actions
+                    </h2>
+                </div>
+
+                <p
+                    id="actionsCount"
+                    class="record-count"
+                ></p>
+
+            </div>
+
+
+            <div
+                id="accreditationActions"
+                class="profile-record-grid"
+            >
             </div>
 
         </section>
 
 
-        <!-- ======================================================
-             ASSOCIATED LOCATIONS AND SITES
-        ======================================================= -->
+        <!-- ==================================================
+             ASSOCIATED LOCATIONS
+        =================================================== -->
 
-        <section id="locationsSection" hidden>
+        <section
+            id="locationsSection"
+            class="profile-card profile-section-card"
+            hidden
+        >
 
-            <h2>Associated Locations &amp; Sites</h2>
+            <div class="profile-card-header profile-card-header-row">
 
-            <p id="locationsCount"></p>
+                <div>
+                    <span class="section-eyebrow">
+                        Institutional Network
+                    </span>
 
-            <div id="associatedLocations">
+                    <h2>
+                        Associated Locations &amp; Sites
+                    </h2>
+                </div>
+
+                <p
+                    id="locationsCount"
+                    class="record-count"
+                ></p>
+
+            </div>
+
+
+            <div
+                id="associatedLocations"
+                class="location-card-grid"
+            >
             </div>
 
         </section>
 
 
-        <!-- ======================================================
-             FUTURE SPS BUSINESS WORKSPACE
-        ======================================================= -->
+        <!-- ==================================================
+             SPS BUSINESS WORKSPACE
+        =================================================== -->
 
-        <section id="spsSection" hidden>
+        <section
+            id="spsSection"
+            class="profile-card sps-workspace-card"
+            hidden
+        >
 
-            <h2>Safe Passage Strategies</h2>
+            <div class="sps-workspace-content">
 
-            <p>
-                This institution has not yet been added to the SPS client workspace.
-            </p>
+                <div>
 
-            <p>
-                The private SPS workspace will eventually contain engagements,
-                Statements of Work, phases, projects, deliverables, documents,
-                tasks, and client portal activity.
-            </p>
+                    <span class="section-eyebrow">
+                        Safe Passage Strategies
+                    </span>
+
+                    <h2>
+                        SPS Client Workspace
+                    </h2>
+
+                    <p>
+                        This institution has not yet been added
+                        to the SPS client workspace.
+                    </p>
+
+                    <p class="sps-workspace-description">
+                        Once added, this workspace will support
+                        engagements, Statements of Work, project
+                        phases, deliverables, documents, tasks,
+                        and client portal activity.
+                    </p>
+
+                </div>
+
+
+                <div class="sps-workspace-diagram">
+
+                    <div class="workspace-step">
+                        SPS Client
+                    </div>
+
+                    <span>→</span>
+
+                    <div class="workspace-step">
+                        Engagement
+                    </div>
+
+                    <span>→</span>
+
+                    <div class="workspace-step">
+                        SOW
+                    </div>
+
+                </div>
+
+            </div>
 
         </section>
+
 
     </main>
 
 
-    <!-- Supabase browser configuration -->
+    <!-- ======================================================
+         FOOTER
+    ======================================================= -->
+
+    <footer class="site-footer">
+
+        <div>
+            Safe Passage Strategies
+        </div>
+
+        <div>
+            Postsecondary Institution Intelligence
+        </div>
+
+    </footer>
+
+
+    <!-- Supabase configuration -->
     <script src="js/config.js"></script>
 
     <!-- Institution profile application -->

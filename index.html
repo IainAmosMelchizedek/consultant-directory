@@ -4,142 +4,201 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Consultant Directory</title>
+    <title>Consultant Directory | Safe Passage Strategies</title>
+
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
 
-    <header>
-        <h1>Consultant Directory</h1>
-        <p>Postsecondary Institution Search</p>
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="brand">
+                <div class="brand-kicker">Safe Passage Strategies</div>
+
+                <h1>Consultant Directory</h1>
+
+                <p>
+                    Postsecondary Institution Intelligence
+                </p>
+            </div>
+        </div>
     </header>
 
-    <main>
 
-        <!-- ======================================================
-             SEARCH
-        ======================================================= -->
+    <main class="page-shell">
 
-        <section id="searchSection">
+        <section id="searchSection" class="search-panel">
 
-            <h2>Search Institutions</h2>
+            <div class="section-heading">
+                <span class="section-eyebrow">Institution Search</span>
 
-            <div>
+                <h2>Search Postsecondary Institutions</h2>
+
+                <p>
+                    Search the national institution directory by name or federal
+                    identifier, or narrow the directory by state and location type.
+                </p>
+            </div>
+
+
+            <div class="search-field-full">
+
                 <label for="institutionSearch">
-                    Institution Name, DAPIP ID, OPE ID, or IPEDS ID
+                    Institution Name or Identifier
                 </label>
+
+                <p class="field-help">
+                    Enter an institution name, DAPIP ID, OPE ID, or IPEDS ID.
+                </p>
 
                 <input
                     type="text"
                     id="institutionSearch"
-                    placeholder="Example: Adrian College, 122074, or 00223400"
+                    placeholder="Example: Adrian College, 122074, 00223400, or 168528"
+                    autocomplete="off"
                 >
+
             </div>
 
 
-            <div>
-                <label for="stateFilter">
-                    State
-                </label>
+            <div class="filter-row">
 
-                <select id="stateFilter">
-                    <option value="">
-                        All States
-                    </option>
-                </select>
+                <div class="filter-field">
+
+                    <label for="stateFilter">
+                        State or Territory
+                    </label>
+
+                    <p class="field-help">
+                        Select a geographic area or search all jurisdictions.
+                    </p>
+
+                    <select id="stateFilter">
+                        <option value="">
+                            All States &amp; Territories
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="filter-field">
+
+                    <label for="locationTypeFilter">
+                        Location Type
+                    </label>
+
+                    <p class="field-help">
+                        Include institutions, additional locations, sites, or all types.
+                    </p>
+
+                    <select id="locationTypeFilter">
+
+                        <option value="" selected>
+                            All Location Types
+                        </option>
+
+                        <option value="Institution">
+                            Institution
+                        </option>
+
+                        <option value="Additional Location">
+                            Additional Location
+                        </option>
+
+                        <option value="Site">
+                            Site
+                        </option>
+
+                    </select>
+
+                </div>
+
             </div>
 
 
-            <div>
-                <label for="locationTypeFilter">
-                    Location Type
-                </label>
+            <div class="search-actions">
 
-                <select id="locationTypeFilter">
-                    <option value="" selected>
-                        All Types
-                    </option>
-
-                    <option value="Institution">
-                        Institution
-                    </option>
-
-                    <option value="Additional Location">
-                        Additional Location
-                    </option>
-
-                    <option value="Site">
-                        Site
-                    </option>
-                </select>
-            </div>
-
-
-            <div>
-                <button id="searchButton" type="button">
-                    Search
+                <button
+                    id="searchButton"
+                    class="button button-primary"
+                    type="button"
+                >
+                    Search Directory
                 </button>
 
-                <button id="clearButton" type="button">
-                    Clear
+                <button
+                    id="clearButton"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Clear Search
                 </button>
+
             </div>
 
         </section>
 
 
-        <!-- ======================================================
-             RESULTS SUMMARY
-        ======================================================= -->
+        <section id="resultsSection" class="results-panel">
 
-        <section id="resultsSection">
+            <div class="results-header">
 
-            <div>
-                <h2>Search Results</h2>
+                <div>
+                    <span class="section-eyebrow">Directory Results</span>
 
-                <p id="resultCount">
-                    Enter a search or select a state to begin.
-                </p>
+                    <h2>Search Results</h2>
+
+                    <p id="resultCount">
+                        Enter a search term or select a state to begin.
+                    </p>
+                </div>
+
 
                 <button
                     id="downloadButton"
+                    class="button button-download"
                     type="button"
                     disabled
                 >
                     Download Results
                 </button>
+
             </div>
 
 
-            <!-- ==================================================
-                 RESULTS
+            <div id="resultsList" class="results-list">
 
-                 JavaScript will create one result card per
-                 institution / additional location / site.
-            =================================================== -->
+                <div class="results-empty">
+                    <div class="empty-marker">SPS</div>
 
-            <div id="resultsList">
+                    <h3>Ready to Search</h3>
+
+                    <p>
+                        Search by institution name or identifier, or select a state
+                        to review institutions, additional locations, and sites.
+                    </p>
+                </div>
+
             </div>
 
 
-            <!-- ==================================================
-                 PAGINATION
-            =================================================== -->
-
-            <div id="pagination" hidden>
+            <div id="pagination" class="pagination" hidden>
 
                 <button
                     id="previousPageButton"
+                    class="button button-secondary"
                     type="button"
                 >
                     Previous
                 </button>
 
-                <span id="pageStatus">
-                </span>
+                <span id="pageStatus"></span>
 
                 <button
                     id="nextPageButton"
+                    class="button button-secondary"
                     type="button"
                 >
                     Next
@@ -152,10 +211,18 @@
     </main>
 
 
-    <!-- Supabase browser configuration -->
-    <script src="js/config.js"></script>
+    <footer class="site-footer">
+        <div>
+            Safe Passage Strategies
+        </div>
 
-    <!-- Consultant Directory application -->
+        <div>
+            Postsecondary Institution Intelligence
+        </div>
+    </footer>
+
+
+    <script src="js/config.js"></script>
     <script src="js/app.js"></script>
 
 </body>
