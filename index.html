@@ -13,49 +13,67 @@
 
     <header class="site-header">
         <div class="header-inner">
-            <div class="brand">
-                <div class="brand-kicker">Safe Passage Strategies</div>
 
-                <h1>Consultant Directory</h1>
+            <div class="brand">
+
+                <div class="brand-kicker">
+                    Safe Passage Strategies
+                </div>
+
+                <h1>
+                    Consultant Directory
+                </h1>
 
                 <p>
-                    Postsecondary Institution Intelligence
+                    Postsecondary Institution &amp; Accreditation Intelligence
                 </p>
+
             </div>
+
         </div>
     </header>
 
 
     <main class="page-shell">
 
-        <section id="searchSection" class="search-panel">
+        <section
+            id="searchSection"
+            class="search-panel"
+        >
 
             <div class="section-heading">
-                <span class="section-eyebrow">Institution Search</span>
 
-                <h2>Search Postsecondary Institutions</h2>
+                <span class="section-eyebrow">
+                    Organization Search
+                </span>
+
+                <h2>
+                    Search Institutions &amp; Accreditors
+                </h2>
 
                 <p>
-                    Search the national institution directory by name or federal
-                    identifier, or narrow the directory by state and location type.
+                    Search the national directory of postsecondary institutions,
+                    locations, sites, and accrediting agencies.
                 </p>
+
             </div>
 
 
             <div class="search-field-full">
 
                 <label for="institutionSearch">
-                    Institution Name or Identifier
+                    Organization Name or Identifier
                 </label>
 
                 <p class="field-help">
-                    Enter an institution name, DAPIP ID, OPE ID, or IPEDS ID.
+                    Enter an institution or accreditor name, DAPIP ID,
+                    OPE ID, IPEDS ID, or Agency ID.
                 </p>
 
                 <input
                     type="text"
                     id="institutionSearch"
-                    placeholder="Example: Adrian College, 122074, 00223400, or 168528"
+                    placeholder="Example: Northeastern University, New England Commission, 121716, or 2"
                     autocomplete="off"
                 >
 
@@ -66,36 +84,79 @@
 
                 <div class="filter-field">
 
-                    <label for="stateFilter">
-                        State or Territory
+                    <label for="organizationTypeFilter">
+                        Organization Type
                     </label>
 
                     <p class="field-help">
-                        Select a geographic area or search all jurisdictions.
+                        Search all organizations or limit results to one entity type.
                     </p>
 
-                    <select id="stateFilter">
-                        <option value="">
-                            All States &amp; Territories
+                    <select id="organizationTypeFilter">
+
+                        <option
+                            value="all"
+                            selected
+                        >
+                            All Organizations
                         </option>
+
+                        <option value="institutions">
+                            Postsecondary Institutions
+                        </option>
+
+                        <option value="accreditors">
+                            Accrediting Agencies
+                        </option>
+
                     </select>
 
                 </div>
 
 
-                <div class="filter-field">
+                <div
+                    id="stateFilterField"
+                    class="filter-field"
+                >
+
+                    <label for="stateFilter">
+                        State or Territory
+                    </label>
+
+                    <p class="field-help">
+                        Applies to institution, location, and site records.
+                    </p>
+
+                    <select id="stateFilter">
+
+                        <option value="">
+                            All States &amp; Territories
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div
+                    id="locationTypeFilterField"
+                    class="filter-field"
+                >
 
                     <label for="locationTypeFilter">
                         Location Type
                     </label>
 
                     <p class="field-help">
-                        Include institutions, additional locations, sites, or all types.
+                        Applies to postsecondary institution records only.
                     </p>
 
                     <select id="locationTypeFilter">
 
-                        <option value="" selected>
+                        <option
+                            value=""
+                            selected
+                        >
                             All Location Types
                         </option>
 
@@ -141,18 +202,27 @@
         </section>
 
 
-        <section id="resultsSection" class="results-panel">
+        <section
+            id="resultsSection"
+            class="results-panel"
+        >
 
             <div class="results-header">
 
                 <div>
-                    <span class="section-eyebrow">Directory Results</span>
 
-                    <h2>Search Results</h2>
+                    <span class="section-eyebrow">
+                        Directory Results
+                    </span>
+
+                    <h2>
+                        Organization Results
+                    </h2>
 
                     <p id="resultCount">
-                        Enter a search term or select a state to begin.
+                        Enter a search term or select a filter to begin.
                     </p>
+
                 </div>
 
 
@@ -168,23 +238,36 @@
             </div>
 
 
-            <div id="resultsList" class="results-list">
+            <div
+                id="resultsList"
+                class="results-list"
+            >
 
                 <div class="results-empty">
-                    <div class="empty-marker">SPS</div>
 
-                    <h3>Ready to Search</h3>
+                    <div class="empty-marker">
+                        SPS
+                    </div>
+
+                    <h3>
+                        Ready to Search
+                    </h3>
 
                     <p>
-                        Search by institution name or identifier, or select a state
-                        to review institutions, additional locations, and sites.
+                        Search postsecondary institutions and accrediting agencies
+                        by organization name or federal identifier.
                     </p>
+
                 </div>
 
             </div>
 
 
-            <div id="pagination" class="pagination" hidden>
+            <div
+                id="pagination"
+                class="pagination"
+                hidden
+            >
 
                 <button
                     id="previousPageButton"
@@ -212,13 +295,15 @@
 
 
     <footer class="site-footer">
+
         <div>
             Safe Passage Strategies
         </div>
 
         <div>
-            Postsecondary Institution Intelligence
+            Postsecondary Institution &amp; Accreditation Intelligence
         </div>
+
     </footer>
 
 

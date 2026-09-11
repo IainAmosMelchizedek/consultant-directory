@@ -15,11 +15,20 @@ const PAGE_SIZE = 50;
 const institutionSearch =
     document.getElementById("institutionSearch");
 
+const organizationTypeFilter =
+    document.getElementById("organizationTypeFilter");
+
 const stateFilter =
     document.getElementById("stateFilter");
 
 const locationTypeFilter =
     document.getElementById("locationTypeFilter");
+
+const stateFilterField =
+    document.getElementById("stateFilterField");
+
+const locationTypeFilterField =
+    document.getElementById("locationTypeFilterField");
 
 const searchButton =
     document.getElementById("searchButton");
@@ -59,7 +68,7 @@ let currentResults = [];
 
 
 // ============================================================
-// States
+// States and territories
 // ============================================================
 
 const STATES = [
@@ -124,155 +133,256 @@ const STATES = [
 
 
 function populateStates() {
+
     for (const [code, name] of STATES) {
-        const option = document.createElement("option");
 
-        option.value = code;
-        option.textContent = `${name} (${code})`;
+        const option =
+            document.createElement("option");
 
-        stateFilter.appendChild(option);
+        option.value =
+            code;
+
+        option.textContent =
+            `${name} (${code})`;
+
+        stateFilter.appendChild(
+            option
+        );
     }
 }
 
 
 // ============================================================
-// Supabase request
+// Filter behavior
 // ============================================================
 
-async function searchInstitutions(page = 1) {
+function updateFilterVisibility() {
 
-    currentPage = page;
+    const organizationType =
+        organizationTypeFilter.value;
 
-    searchButton.disabled = true;
 
-    resultCount.textContent = "Searching...";
+    if (organizationType === "accreditors") {
 
-    resultsList.innerHTML = "";
+        stateFilter.value = "";
+        locationTypeFilter.value = "";
+
+        stateFilterField.hidden = true;
+        locationTypeFilterField.hidden = true;
+
+        return;
+    }
+
+
+    stateFilterField.hidden = false;
+    locationTypeFilterField.hidden = false;
+}
+
+
+// ============================================================
+// Unified directory query
+// ============================================================
+
+function buildDirectoryParams() {
+
+    const params =
+        new URLSearchParams();
+
+
+    // --------------------------------------------------------
+    // Return normalized public directory fields
+    // --------------------------------------------------------
+
+    params.set(
+        "select",
+        "*"
+    );
+
+
+    // --------------------------------------------------------
+    // Organization type
+    // --------------------------------------------------------
+
+    const organizationType =
+        organizationTypeFilter.value;
+
+
+    if (organizationType === "institutions") {
+
+        params.set(
+            "organization_kind",
+            "eq.institution"
+        );
+    }
+
+
+    if (organizationType === "accreditors") {
+
+        params.set(
+            "organization_kind",
+            "eq.accreditor"
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Institution-only geographic filter
+    // --------------------------------------------------------
+
+    const state =
+        stateFilter.value.trim();
+
+
+    if (
+        organizationType !== "accreditors" &&
+        state
+    ) {
+
+        params.set(
+            "state",
+            `eq.${state}`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Institution-only location-type filter
+    // --------------------------------------------------------
+
+    const locationType =
+        locationTypeFilter.value.trim();
+
+
+    if (
+        organizationType !== "accreditors" &&
+        locationType
+    ) {
+
+        params.set(
+            "record_type",
+            `eq.${locationType}`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Organization / identifier search
+    //
+    // The unified search supports:
+    //
+    // Institution / location name
+    // Parent institution name
+    // Accreditor name
+    // DAPIP ID
+    // OPE ID
+    // IPEDS ID
+    // Agency ID
+    // --------------------------------------------------------
+
+    const term =
+        institutionSearch.value.trim();
+
+
+    if (term) {
+
+        const safeTerm =
+            term.replace(
+                /[(),]/g,
+                " "
+            );
+
+
+        const orFilter = [
+            `organization_name.ilike.*${safeTerm}*`,
+            `parent_name.ilike.*${safeTerm}*`,
+            `primary_id.eq.${safeTerm}`,
+            `dapip_id.eq.${safeTerm}`,
+            `ope_id.eq.${safeTerm}`,
+            `ipeds_unit_ids.ilike.*${safeTerm}*`,
+            `agency_id.eq.${safeTerm}`
+        ].join(",");
+
+
+        params.set(
+            "or",
+            `(${orFilter})`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Stable ordering
+    // --------------------------------------------------------
+
+    params.set(
+        "order",
+        "organization_name.asc,organization_kind.asc,primary_id.asc"
+    );
+
+
+    return params;
+}
+
+
+// ============================================================
+// Search
+// ============================================================
+
+async function searchDirectory(page = 1) {
+
+    currentPage =
+        page;
+
+    searchButton.disabled =
+        true;
+
+    resultCount.textContent =
+        "Searching...";
+
+    resultsList.innerHTML =
+        "";
+
 
     try {
 
         const endpoint =
-    `${url}/rest/v1/institute_campuses`;
+            `${url}/rest/v1/directory_organizations`;
 
-const params =
-    new URLSearchParams();
+        const params =
+            buildDirectoryParams();
 
-
-        // ----------------------------------------------------
-        // Return every public column
-        // ----------------------------------------------------
-
-        params.set(
-            "select",
-            "*"
-        );
-
-
-        // ----------------------------------------------------
-        // State filter
-        // ----------------------------------------------------
-
-        const state =
-            stateFilter.value.trim();
-
-        if (state) {
-            params.set(
-                "state",
-                `eq.${state}`
-            );
-        }
-
-
-        // ----------------------------------------------------
-        // Location type filter
-        // ----------------------------------------------------
-
-        const locationType =
-            locationTypeFilter.value.trim();
-
-        if (locationType) {
-            params.set(
-                "location_type",
-                `eq.${locationType}`
-            );
-        }
-
-
-        // ----------------------------------------------------
-        // Institution / ID search
-        //
-        // One search box can look for:
-        //
-        // Institution name
-        // Parent institution name
-        // DAPIP ID
-        // OPE ID
-        // IPEDS ID
-        // ----------------------------------------------------
-
-        const term =
-            institutionSearch.value.trim();
-
-        if (term) {
-
-            const safeTerm =
-                term.replace(/[(),]/g, " ");
-
-            const orFilter = [
-                `location_name.ilike.*${safeTerm}*`,
-                `parent_name.ilike.*${safeTerm}*`,
-                `dapip_id.eq.${safeTerm}`,
-                `ope_id.eq.${safeTerm}`,
-                `ipeds_unit_ids.ilike.*${safeTerm}*`
-            ].join(",");
-
-            params.set(
-                "or",
-                `(${orFilter})`
-            );
-        }
-
-
-        // ----------------------------------------------------
-        // Stable ordering
-        // ----------------------------------------------------
-
-        params.set(
-            "order",
-            "location_name.asc,dapip_id.asc"
-        );
-
-
-        // ----------------------------------------------------
-        // Pagination
-        // ----------------------------------------------------
 
         const start =
-            (currentPage - 1) * PAGE_SIZE;
+            (currentPage - 1) *
+            PAGE_SIZE;
 
         const end =
-            start + PAGE_SIZE - 1;
+            start +
+            PAGE_SIZE -
+            1;
 
 
-        const response = await fetch(
-    `${endpoint}?${params.toString()}`,
-            {
-                method: "GET",
+        const response =
+            await fetch(
+                `${endpoint}?${params.toString()}`,
+                {
+                    method: "GET",
 
-                headers: {
-                    "apikey": publishableKey,
+                    headers: {
+                        "apikey":
+                            publishableKey,
 
-                    "Authorization":
-                        `Bearer ${publishableKey}`,
+                        "Authorization":
+                            `Bearer ${publishableKey}`,
 
-                    "Prefer":
-                        "count=exact",
+                        "Prefer":
+                            "count=exact",
 
-                    "Range":
-                        `${start}-${end}`
+                        "Range":
+                            `${start}-${end}`
+                    }
                 }
-            }
-        );
+            );
 
 
         if (!response.ok) {
@@ -290,15 +400,11 @@ const params =
             await response.json();
 
 
-        // ----------------------------------------------------
-        // Exact total count
-        //
-        // Example:
-        // Content-Range: 0-49/1215
-        // ----------------------------------------------------
-
         const contentRange =
-            response.headers.get("content-range");
+            response.headers.get(
+                "content-range"
+            );
+
 
         if (
             contentRange &&
@@ -314,6 +420,7 @@ const params =
                     : Number(totalText);
         }
         else {
+
             totalResults =
                 currentResults.length;
         }
@@ -325,7 +432,9 @@ const params =
     }
     catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
         currentResults = [];
         totalResults = 0;
@@ -333,12 +442,17 @@ const params =
         resultCount.textContent =
             `Search failed: ${error.message}`;
 
-        pagination.hidden = true;
-        downloadButton.disabled = true;
+        pagination.hidden =
+            true;
+
+        downloadButton.disabled =
+            true;
+
     }
     finally {
 
-        searchButton.disabled = false;
+        searchButton.disabled =
+            false;
     }
 }
 
@@ -349,10 +463,13 @@ const params =
 
 function renderResults() {
 
-    resultsList.innerHTML = "";
+    resultsList.innerHTML =
+        "";
+
 
     resultCount.textContent =
         `${totalResults.toLocaleString()} record(s) found.`;
+
 
     downloadButton.disabled =
         currentResults.length === 0;
@@ -360,13 +477,53 @@ function renderResults() {
 
     if (!currentResults.length) {
 
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "results-empty";
+
+
+        const marker =
+            document.createElement("div");
+
+        marker.className =
+            "empty-marker";
+
+        marker.textContent =
+            "SPS";
+
+
+        const heading =
+            document.createElement("h3");
+
+        heading.textContent =
+            "No Organizations Found";
+
+
         const message =
             document.createElement("p");
 
         message.textContent =
-            "No matching institutions or locations were found.";
+            "No institutions, locations, sites, or accrediting agencies matched the current search.";
 
-        resultsList.appendChild(message);
+
+        empty.appendChild(
+            marker
+        );
+
+        empty.appendChild(
+            heading
+        );
+
+        empty.appendChild(
+            message
+        );
+
+
+        resultsList.appendChild(
+            empty
+        );
 
         return;
     }
@@ -374,211 +531,355 @@ function renderResults() {
 
     for (const row of currentResults) {
 
-        const article =
-            document.createElement("article");
+        if (
+            row.organization_kind ===
+            "accreditor"
+        ) {
+
+            renderAccreditorResult(
+                row
+            );
+
+        }
+        else {
+
+            renderInstitutionResult(
+                row
+            );
+        }
+    }
+}
 
 
-        // ----------------------------------------------------
-        // Type
-        // ----------------------------------------------------
+// ============================================================
+// Institution result
+// ============================================================
 
-        const type =
-            document.createElement("strong");
+function renderInstitutionResult(row) {
 
-        type.textContent =
-            row.location_type || "Unknown Type";
-
-        article.appendChild(type);
+    const article =
+        document.createElement("article");
 
 
-        // ----------------------------------------------------
-        // Institution / location name
-        // ----------------------------------------------------
+    // --------------------------------------------------------
+    // Record type
+    // --------------------------------------------------------
 
-        const heading =
-            document.createElement("h3");
+    const type =
+        document.createElement("strong");
 
-        heading.textContent =
-            row.location_name || "Unnamed Record";
+    type.textContent =
+        row.record_type ||
+        "Institution";
 
-        article.appendChild(heading);
+    article.appendChild(
+        type
+    );
 
 
-        // ----------------------------------------------------
-        // Location
-        // ----------------------------------------------------
+    // --------------------------------------------------------
+    // Institution / location name
+    // --------------------------------------------------------
+
+    const heading =
+        document.createElement("h3");
+
+    heading.textContent =
+        row.organization_name ||
+        "Unnamed Record";
+
+    article.appendChild(
+        heading
+    );
+
+
+    // --------------------------------------------------------
+    // Location
+    // --------------------------------------------------------
+
+    const locationParts = [
+        row.city,
+        row.state,
+        row.zip_code
+    ].filter(Boolean);
+
+
+    if (locationParts.length) {
 
         const location =
             document.createElement("p");
 
-        const locationParts = [
-            row.city,
-            row.state,
-            row.zip_code
-        ].filter(Boolean);
-
         location.textContent =
             locationParts.join(", ");
 
-        article.appendChild(location);
+        article.appendChild(
+            location
+        );
+    }
 
 
-        // ----------------------------------------------------
-        // Parent relationship
-        //
-        // Additional locations and sites must clearly show
-        // the institution with which they are associated.
-        // ----------------------------------------------------
+    // --------------------------------------------------------
+    // Parent institution relationship
+    // --------------------------------------------------------
 
-        if (
-            row.location_type !== "Institution" &&
-            row.parent_name &&
-            row.parent_name !== "-"
-        ) {
+    if (
+        row.record_type !== "Institution" &&
+        row.parent_name &&
+        row.parent_name !== "-"
+    ) {
 
-            const parent =
+        const parent =
+            document.createElement("p");
+
+        parent.textContent =
+            `Parent Institution: ${row.parent_name}`;
+
+        article.appendChild(
+            parent
+        );
+
+
+        if (row.parent_id) {
+
+            const parentId =
                 document.createElement("p");
 
-            parent.textContent =
-                `Parent Institution: ${row.parent_name}`;
+            parentId.textContent =
+                `Parent DAPIP ID: ${row.parent_id}`;
 
-            article.appendChild(parent);
-
-
-            if (row.parent_dapip_id) {
-
-                const parentId =
-                    document.createElement("p");
-
-                parentId.textContent =
-                    `Parent DAPIP ID: ${row.parent_dapip_id}`;
-
-                article.appendChild(parentId);
-            }
+            article.appendChild(
+                parentId
+            );
         }
+    }
 
 
-        // ----------------------------------------------------
-        // Identifiers
-        // ----------------------------------------------------
+    // --------------------------------------------------------
+    // Federal identifiers
+    // --------------------------------------------------------
+
+    const idParts =
+        [];
+
+
+    if (row.dapip_id) {
+
+        idParts.push(
+            `DAPIP ID: ${row.dapip_id}`
+        );
+    }
+
+
+    if (row.ope_id) {
+
+        idParts.push(
+            `OPE ID: ${row.ope_id}`
+        );
+    }
+
+
+    if (row.ipeds_unit_ids) {
+
+        idParts.push(
+            `IPEDS ID: ${row.ipeds_unit_ids}`
+        );
+    }
+
+
+    if (idParts.length) {
 
         const identifiers =
             document.createElement("p");
 
-        const idParts = [];
-
-        if (row.dapip_id) {
-            idParts.push(
-                `DAPIP ID: ${row.dapip_id}`
-            );
-        }
-
-        if (row.ope_id) {
-            idParts.push(
-                `OPE ID: ${row.ope_id}`
-            );
-        }
-
-        if (row.ipeds_unit_ids) {
-            idParts.push(
-                `IPEDS ID: ${row.ipeds_unit_ids}`
-            );
-        }
-
         identifiers.textContent =
             idParts.join(" | ");
 
-        article.appendChild(identifiers);
+        article.appendChild(
+            identifiers
+        );
+    }
 
 
-        // ----------------------------------------------------
-        // Public contact information
-        // ----------------------------------------------------
+    // --------------------------------------------------------
+    // Public contact information
+    // --------------------------------------------------------
 
-        if (row.general_phone) {
+    if (row.general_phone) {
 
-            const phone =
-                document.createElement("p");
+        const phone =
+            document.createElement("p");
 
-            phone.textContent =
-                `General Phone: ${row.general_phone}`;
+        phone.textContent =
+            `General Phone: ${row.general_phone}`;
 
-            article.appendChild(phone);
-        }
-
-
-        if (row.admin_name) {
-
-            const admin =
-                document.createElement("p");
-
-            admin.textContent =
-                `Administrator: ${row.admin_name}`;
-
-            article.appendChild(admin);
-        }
+        article.appendChild(
+            phone
+        );
+    }
 
 
-        if (row.admin_phone) {
+    if (row.admin_name) {
 
-            const adminPhone =
-                document.createElement("p");
+        const admin =
+            document.createElement("p");
 
-            adminPhone.textContent =
-                `Admin Phone: ${row.admin_phone}`;
+        admin.textContent =
+            `Administrator: ${row.admin_name}`;
 
-            article.appendChild(adminPhone);
-        }
-
-
-        if (row.admin_email) {
-
-            const adminEmail =
-                document.createElement("p");
-
-            const label =
-                document.createTextNode(
-                    "Admin Email: "
-                );
-
-            const link =
-                document.createElement("a");
-
-            link.href =
-                `mailto:${row.admin_email}`;
-
-            link.textContent =
-                row.admin_email;
-
-            adminEmail.appendChild(label);
-            adminEmail.appendChild(link);
-
-            article.appendChild(adminEmail);
-        }
+        article.appendChild(
+            admin
+        );
+    }
 
 
-        // ----------------------------------------------------
-        // Profile link
-        //
-        // We will build profile.html next.
-        // ----------------------------------------------------
+    if (row.admin_phone) {
 
-        const profileLink =
+        const adminPhone =
+            document.createElement("p");
+
+        adminPhone.textContent =
+            `Admin Phone: ${row.admin_phone}`;
+
+        article.appendChild(
+            adminPhone
+        );
+    }
+
+
+    if (row.admin_email) {
+
+        const adminEmail =
+            document.createElement("p");
+
+        const label =
+            document.createTextNode(
+                "Admin Email: "
+            );
+
+        const link =
             document.createElement("a");
 
-        profileLink.href =
-            `profile.html?dapip_id=${encodeURIComponent(row.dapip_id)}`;
+        link.href =
+            `mailto:${row.admin_email}`;
 
-        profileLink.textContent =
-            row.location_type === "Institution"
-                ? "View Institution"
-                : "View Location";
-
-        article.appendChild(profileLink);
+        link.textContent =
+            row.admin_email;
 
 
-        resultsList.appendChild(article);
+        adminEmail.appendChild(
+            label
+        );
+
+        adminEmail.appendChild(
+            link
+        );
+
+        article.appendChild(
+            adminEmail
+        );
     }
+
+
+    // --------------------------------------------------------
+    // Institution profile
+    // --------------------------------------------------------
+
+    const profileLink =
+        document.createElement("a");
+
+    profileLink.href =
+        `profile.html?dapip_id=${encodeURIComponent(row.dapip_id)}`;
+
+    profileLink.textContent =
+        row.record_type === "Institution"
+            ? "View Institution"
+            : "View Location";
+
+
+    article.appendChild(
+        profileLink
+    );
+
+
+    resultsList.appendChild(
+        article
+    );
+}
+
+
+// ============================================================
+// Accreditor result
+// ============================================================
+
+function renderAccreditorResult(row) {
+
+    const article =
+        document.createElement("article");
+
+
+    const type =
+        document.createElement("strong");
+
+    type.textContent =
+        "Accrediting Agency";
+
+    article.appendChild(
+        type
+    );
+
+
+    const heading =
+        document.createElement("h3");
+
+    heading.textContent =
+        row.organization_name ||
+        "Unnamed Accreditor";
+
+    article.appendChild(
+        heading
+    );
+
+
+    const identifier =
+        document.createElement("p");
+
+    identifier.textContent =
+        `Agency ID: ${row.agency_id || row.primary_id || "—"}`;
+
+    article.appendChild(
+        identifier
+    );
+
+
+    const relationship =
+        document.createElement("p");
+
+    relationship.textContent =
+        "Accreditor record";
+
+    article.appendChild(
+        relationship
+    );
+
+
+    const profileLink =
+        document.createElement("a");
+
+    profileLink.href =
+        `accreditor-profile.html?agency_id=${encodeURIComponent(row.agency_id || row.primary_id)}`;
+
+    profileLink.textContent =
+        "View Accreditor";
+
+
+    article.appendChild(
+        profileLink
+    );
+
+
+    resultsList.appendChild(
+        article
+    );
 }
 
 
@@ -590,18 +891,22 @@ function renderPagination() {
 
     const totalPages =
         Math.ceil(
-            totalResults / PAGE_SIZE
+            totalResults /
+            PAGE_SIZE
         );
+
 
     if (totalPages <= 1) {
 
-        pagination.hidden = true;
+        pagination.hidden =
+            true;
 
         return;
     }
 
 
-    pagination.hidden = false;
+    pagination.hidden =
+        false;
 
 
     pageStatus.textContent =
@@ -623,39 +928,72 @@ function renderPagination() {
 
 function clearSearch() {
 
-    institutionSearch.value = "";
+    institutionSearch.value =
+        "";
 
-    stateFilter.value = "";
+    organizationTypeFilter.value =
+        "all";
 
-    locationTypeFilter.value = "";
+    stateFilter.value =
+        "";
 
-    currentPage = 1;
+    locationTypeFilter.value =
+        "";
 
-    totalResults = 0;
+    currentPage =
+        1;
 
-    currentResults = [];
+    totalResults =
+        0;
 
-    resultsList.innerHTML = "";
+    currentResults =
+        [];
+
+
+    updateFilterVisibility();
+
+
+    resultsList.innerHTML = `
+        <div class="results-empty">
+            <div class="empty-marker">
+                SPS
+            </div>
+
+            <h3>
+                Ready to Search
+            </h3>
+
+            <p>
+                Search postsecondary institutions and accrediting
+                agencies by organization name or federal identifier.
+            </p>
+        </div>
+    `;
+
 
     resultCount.textContent =
-        "Enter a search or select a state to begin.";
+        "Enter a search term or select a filter to begin.";
 
-    pagination.hidden = true;
 
-    downloadButton.disabled = true;
+    pagination.hidden =
+        true;
+
+    downloadButton.disabled =
+        true;
 }
 
 
 // ============================================================
 // CSV Download
 //
-// Downloads all rows matching the current filters,
+// Downloads all rows matching the current unified search,
 // not just the current 50-row page.
 // ============================================================
 
 async function downloadCSV() {
 
-    downloadButton.disabled = true;
+    downloadButton.disabled =
+        true;
 
     const originalText =
         downloadButton.textContent;
@@ -663,84 +1001,31 @@ async function downloadCSV() {
     downloadButton.textContent =
         "Preparing download...";
 
+
     try {
 
-        const allRows = [];
+        const endpoint =
+            `${url}/rest/v1/directory_organizations`;
 
-        let page = 0;
+        const allRows =
+            [];
 
-        const DOWNLOAD_BATCH_SIZE = 1000;
+        const DOWNLOAD_BATCH_SIZE =
+            1000;
+
+        let batch =
+            0;
 
 
         while (true) {
 
-            const endpoint =
-                new URL(
-                    `${url}/rest/v1/institute_campuses`
-                );
-
-
-            params.set(
-                "select",
-                "*"
-            );
-
-
-            const state =
-                stateFilter.value.trim();
-
-            if (state) {
-
-                params.set(
-                    "state",
-                    `eq.${state}`
-                );
-            }
-
-
-            const locationType =
-                locationTypeFilter.value.trim();
-
-            if (locationType) {
-
-                params.set(
-                    "location_type",
-                    `eq.${locationType}`
-                );
-            }
-
-
-            const term =
-                institutionSearch.value.trim();
-
-            if (term) {
-
-                const safeTerm =
-                    term.replace(/[(),]/g, " ");
-
-                const orFilter = [
-                    `location_name.ilike.*${safeTerm}*`,
-                    `parent_name.ilike.*${safeTerm}*`,
-                    `dapip_id.eq.${safeTerm}`,
-                    `ope_id.eq.${safeTerm}`,
-                    `ipeds_unit_ids.ilike.*${safeTerm}*`
-                ].join(",");
-
-                params.set(
-                    "or",
-                    `(${orFilter})`
-                );
-            }
-
-
-            params.set(
-                "order",
-                "location_name.asc,dapip_id.asc"
-            );
+            const params =
+                buildDirectoryParams();
 
 
             const start =
-                page * DOWNLOAD_BATCH_SIZE;
+                batch *
+                DOWNLOAD_BATCH_SIZE;
 
             const end =
                 start +
@@ -750,8 +1035,10 @@ async function downloadCSV() {
 
             const response =
                 await fetch(
-                    endpoint.toString(),
+                    `${endpoint}?${params.toString()}`,
                     {
+                        method: "GET",
+
                         headers: {
                             "apikey":
                                 publishableKey,
@@ -778,18 +1065,21 @@ async function downloadCSV() {
                 await response.json();
 
 
-            allRows.push(...rows);
+            allRows.push(
+                ...rows
+            );
 
 
             if (
                 rows.length <
                 DOWNLOAD_BATCH_SIZE
             ) {
+
                 break;
             }
 
 
-            page++;
+            batch++;
         }
 
 
@@ -804,29 +1094,40 @@ async function downloadCSV() {
 
 
         const columns =
-            Object.keys(allRows[0]);
+            Object.keys(
+                allRows[0]
+            );
 
 
-        const escapeCSV = value => {
+        const escapeCSV =
+            value => {
 
-            if (
-                value === null ||
-                value === undefined
-            ) {
-                return "";
-            }
+                if (
+                    value === null ||
+                    value === undefined
+                ) {
 
-            const text =
-                String(value)
-                    .replace(/"/g, '""');
+                    return "";
+                }
 
-            return `"${text}"`;
-        };
+
+                const text =
+                    String(value)
+                        .replace(
+                            /"/g,
+                            '""'
+                        );
+
+
+                return `"${text}"`;
+            };
 
 
         const lines = [
             columns
-                .map(escapeCSV)
+                .map(
+                    escapeCSV
+                )
                 .join(",")
         ];
 
@@ -837,7 +1138,9 @@ async function downloadCSV() {
                 columns
                     .map(
                         column =>
-                            escapeCSV(row[column])
+                            escapeCSV(
+                                row[column]
+                            )
                     )
                     .join(",")
             );
@@ -845,7 +1148,9 @@ async function downloadCSV() {
 
 
         const csv =
-            lines.join("\r\n");
+            lines.join(
+                "\r\n"
+            );
 
 
         const blob =
@@ -859,11 +1164,15 @@ async function downloadCSV() {
 
 
         const objectURL =
-            URL.createObjectURL(blob);
+            URL.createObjectURL(
+                blob
+            );
 
 
         const link =
-            document.createElement("a");
+            document.createElement(
+                "a"
+            );
 
         link.href =
             objectURL;
@@ -872,7 +1181,9 @@ async function downloadCSV() {
             "consultant-directory-results.csv";
 
 
-        document.body.appendChild(link);
+        document.body.appendChild(
+            link
+        );
 
         link.click();
 
@@ -886,11 +1197,14 @@ async function downloadCSV() {
     }
     catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
         alert(
             `Download failed: ${error.message}`
         );
+
     }
     finally {
 
@@ -909,7 +1223,7 @@ async function downloadCSV() {
 
 searchButton.addEventListener(
     "click",
-    () => searchInstitutions(1)
+    () => searchDirectory(1)
 );
 
 
@@ -925,12 +1239,19 @@ downloadButton.addEventListener(
 );
 
 
+organizationTypeFilter.addEventListener(
+    "change",
+    updateFilterVisibility
+);
+
+
 previousPageButton.addEventListener(
     "click",
     () => {
 
         if (currentPage > 1) {
-            searchInstitutions(
+
+            searchDirectory(
                 currentPage - 1
             );
         }
@@ -948,12 +1269,13 @@ nextPageButton.addEventListener(
                 PAGE_SIZE
             );
 
+
         if (
             currentPage <
             totalPages
         ) {
 
-            searchInstitutions(
+            searchDirectory(
                 currentPage + 1
             );
         }
@@ -965,8 +1287,12 @@ institutionSearch.addEventListener(
     "keydown",
     event => {
 
-        if (event.key === "Enter") {
-            searchInstitutions(1);
+        if (
+            event.key ===
+            "Enter"
+        ) {
+
+            searchDirectory(1);
         }
     }
 );
@@ -977,3 +1303,4 @@ institutionSearch.addEventListener(
 // ============================================================
 
 populateStates();
+updateFilterVisibility();
