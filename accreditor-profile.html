@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Accreditor Profile | Safe Passage Strategies
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/styles.css"
+    >
+</head>
+
+
+<body class="profile-page">
+
+    <header
+        class="site-header profile-site-header"
+    >
+
+        <div class="header-inner">
+
+            <div class="brand">
+
+                <div class="brand-kicker">
+                    Safe Passage Strategies
+                </div>
+
+
+                <div class="profile-header-row">
+
+                    <div class="profile-heading">
+
+                        <a
+                            href="index.html"
+                            class="back-link"
+                        >
+                            ← Back to Directory
+                        </a>
+
+
+                        <h1 id="accreditorName">
+                            Accreditor Profile
+                        </h1>
+
+
+                        <div class="profile-type-row">
+
+                            <span
+                                id="accreditorType"
+                                class="profile-type-badge"
+                            >
+                                Accrediting Agency
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="profile-primary-action">
+
+                        <button
+                            id="addToSpsButton"
+                            class="button sps-client-button"
+                            type="button"
+                        >
+                            Add to SPS Clients
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="page-shell profile-shell">
+
+        <section
+            id="profileStatus"
+            class="profile-status"
+        >
+
+            <p>
+                Loading accreditor profile...
+            </p>
+
+        </section>
+
+
+        <div class="profile-top-grid">
+
+
+            <section
+                id="identifiersSection"
+                class="profile-card identifiers-card"
+            >
+
+                <div class="profile-card-header">
+
+                    <span class="section-eyebrow">
+                        Federal Identifier
+                    </span>
+
+                    <h2>
+                        Accreditor Identifier
+                    </h2>
+
+                </div>
+
+
+                <dl class="detail-list compact-detail-list">
+
+                    <div class="detail-row">
+
+                        <dt>
+                            Agency ID
+                        </dt>
+
+                        <dd id="agencyId">
+                            —
+                        </dd>
+
+                    </div>
+
+                </dl>
+
+            </section>
+
+
+            <section
+                id="accreditorSection"
+                class="profile-card institution-card"
+            >
+
+                <div class="profile-card-header">
+
+                    <span class="section-eyebrow">
+                        Accreditor Record
+                    </span>
+
+                    <h2>
+                        Accrediting Agency Information
+                    </h2>
+
+                </div>
+
+
+                <dl class="detail-list institution-detail-list">
+
+                    <div class="detail-row detail-row-wide">
+
+                        <dt>
+                            Agency Name
+                        </dt>
+
+                        <dd id="agencyName">
+                            —
+                        </dd>
+
+                    </div>
+
+
+                    <div class="detail-row">
+
+                        <dt>
+                            Organization Type
+                        </dt>
+
+                        <dd>
+                            Accrediting Agency
+                        </dd>
+
+                    </div>
+
+
+                    <div class="detail-row">
+
+                        <dt>
+                            Agency ID
+                        </dt>
+
+                        <dd id="agencyIdDetail">
+                            —
+                        </dd>
+
+                    </div>
+
+                </dl>
+
+            </section>
+
+        </div>
+
+
+        <section
+            id="institutionsSection"
+            class="profile-card profile-section-card"
+        >
+
+            <div class="profile-card-header profile-card-header-row">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        Accreditation Portfolio
+                    </span>
+
+                    <h2>
+                        Institutions &amp; Locations
+                    </h2>
+
+                </div>
+
+
+                <p
+                    id="institutionsCount"
+                    class="record-count"
+                >
+                    Loading...
+                </p>
+
+            </div>
+
+
+            <div
+                id="accreditedInstitutions"
+                class="location-card-grid"
+            ></div>
+
+        </section>
+
+
+        <section
+            id="accreditationSection"
+            class="profile-card profile-section-card"
+        >
+
+            <div class="profile-card-header profile-card-header-row">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        Accreditation
+                    </span>
+
+                    <h2>
+                        Accreditation Records
+                    </h2>
+
+                </div>
+
+
+                <p
+                    id="accreditationCount"
+                    class="record-count"
+                >
+                    Loading...
+                </p>
+
+            </div>
+
+
+            <div
+                id="accreditationRecords"
+                class="profile-record-grid"
+            ></div>
+
+        </section>
+
+
+        <section
+            id="actionsSection"
+            class="profile-card profile-section-card"
+        >
+
+            <div class="profile-card-header profile-card-header-row">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        Regulatory History
+                    </span>
+
+                    <h2>
+                        Accreditation Actions
+                    </h2>
+
+                </div>
+
+
+                <p
+                    id="actionsCount"
+                    class="record-count"
+                >
+                    Loading...
+                </p>
+
+            </div>
+
+
+            <div
+                id="accreditationActions"
+                class="profile-record-grid"
+            ></div>
+
+        </section>
+
+
+
+
+    </main>
+
+
+    <footer class="site-footer">
+
+        <div>
+            Safe Passage Strategies
+        </div>
+
+        <div>
+            Postsecondary Institution &amp; Accreditation Intelligence
+        </div>
+
+    </footer>
+
+
+    <script src="js/config.js"></script>
+    <script src="js/accreditor-profile.js"></script>
+
+</body>
+</html>
