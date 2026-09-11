@@ -120,6 +120,13 @@ CREATE TABLE IF NOT EXISTS institute_campuses (
     update_date TEXT
 );
 
+
+CREATE TABLE IF NOT EXISTS accreditors (
+    agency_id TEXT PRIMARY KEY,
+    agency_name TEXT NOT NULL UNIQUE
+);
+
+
 CREATE TABLE IF NOT EXISTS accreditation_records (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     dapip_id TEXT NOT NULL
@@ -138,6 +145,7 @@ CREATE TABLE IF NOT EXISTS accreditation_records (
     ending_action_id TEXT
 );
 
+
 CREATE TABLE IF NOT EXISTS accreditation_actions (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     dapip_id TEXT NOT NULL
@@ -154,6 +162,7 @@ CREATE TABLE IF NOT EXISTS accreditation_actions (
     end_date TEXT
 );
 
+
 CREATE INDEX IF NOT EXISTS idx_institute_state
     ON institute_campuses(state);
 
@@ -162,6 +171,9 @@ CREATE INDEX IF NOT EXISTS idx_institute_location_type
 
 CREATE INDEX IF NOT EXISTS idx_institute_parent_dapip
     ON institute_campuses(parent_dapip_id);
+
+CREATE INDEX IF NOT EXISTS idx_accreditors_name
+    ON accreditors(agency_name);
 
 CREATE INDEX IF NOT EXISTS idx_records_dapip
     ON accreditation_records(dapip_id);
@@ -178,9 +190,38 @@ CREATE INDEX IF NOT EXISTS idx_actions_dapip
 CREATE INDEX IF NOT EXISTS idx_actions_agency
     ON accreditation_actions(agency_id);
 
-ALTER TABLE institute_campuses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE accreditation_records ENABLE ROW LEVEL SECURITY;
-ALTER TABLE accreditation_actions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE institute_campuses
+    ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE accreditors
+    ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE accreditation_records
+    ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE accreditation_actions
+    ENABLE ROW LEVEL SECURITY;
+"""
+
+
+RELATIONSHIP_SQL = """
+ALTER TABLE accreditation_records
+DROP CONSTRAINT IF EXISTS fk_accreditation_records_accreditor;
+
+ALTER TABLE accreditation_records
+ADD CONSTRAINT fk_accreditation_records_accreditor
+FOREIGN KEY (agency_id)
+REFERENCES accreditors(agency_id);
+
+
+ALTER TABLE accreditation_actions
+DROP CONSTRAINT IF EXISTS fk_accreditation_actions_accreditor;
+
+ALTER TABLE accreditation_actions
+ADD CONSTRAINT fk_accreditation_actions_accreditor
+FOREIGN KEY (agency_id)
+REFERENCES accreditors(agency_id);
 """
 
 
@@ -207,28 +248,106 @@ def load_sheet(sheet_name):
 
     df = df.rename(columns=COLUMN_MAPS[sheet_name])
 
-    # Convert blank strings to Python None / SQL NULL.
+    # Convert blank strings and spreadsheet null values to SQL NULL.
     df = df.map(
-    lambda value: None
-    if (
-        value is None
-        or pd.isna(value)
-        or str(value).strip().lower() in {"", "nan", "nat"}
+        lambda value: None
+        if (
+            value is None
+            or pd.isna(value)
+            or str(value).strip().lower() in {"", "nan", "nat"}
+        )
+        else str(value).strip()
     )
-    else str(value).strip()
-)
 
     return df
 
 
-def validate_data(campuses, records, actions):
+def build_accreditors(records, actions):
+    print("Building accreditor entities...")
+
+    record_agencies = records[
+        ["agency_id", "agency_name"]
+    ].copy()
+
+    action_agencies = actions[
+        ["agency_id", "agency_name"]
+    ].copy()
+
+    agencies = pd.concat(
+        [record_agencies, action_agencies],
+        ignore_index=True,
+    )
+
+    if agencies["agency_id"].isna().any():
+        raise RuntimeError(
+            "Accreditation data contains a blank AgencyId."
+        )
+
+    if agencies["agency_name"].isna().any():
+        raise RuntimeError(
+            "Accreditation data contains a blank AgencyName."
+        )
+
+    id_name_counts = (
+        agencies
+        .groupby("agency_id")["agency_name"]
+        .nunique()
+    )
+
+    conflicting_ids = id_name_counts[
+        id_name_counts > 1
+    ]
+
+    if len(conflicting_ids):
+        raise RuntimeError(
+            "One or more AgencyId values map to multiple AgencyName values."
+        )
+
+    name_id_counts = (
+        agencies
+        .groupby("agency_name")["agency_id"]
+        .nunique()
+    )
+
+    conflicting_names = name_id_counts[
+        name_id_counts > 1
+    ]
+
+    if len(conflicting_names):
+        raise RuntimeError(
+            "One or more AgencyName values map to multiple AgencyId values."
+        )
+
+    accreditors = (
+        agencies
+        .drop_duplicates(
+            subset=["agency_id", "agency_name"]
+        )
+        .sort_values(
+            by=["agency_name", "agency_id"]
+        )
+        .reset_index(drop=True)
+    )
+
+    print(
+        f"Accreditor entities built: {len(accreditors):,}"
+    )
+
+    return accreditors
+
+
+def validate_data(campuses, accreditors, records, actions):
     print("Validating source data...")
 
     if campuses["dapip_id"].isna().any():
-        raise RuntimeError("InstituteCampuses contains a blank DapipId.")
+        raise RuntimeError(
+            "InstituteCampuses contains a blank DapipId."
+        )
 
     if campuses["dapip_id"].duplicated().any():
-        raise RuntimeError("InstituteCampuses contains duplicate DapipId values.")
+        raise RuntimeError(
+            "InstituteCampuses contains duplicate DapipId values."
+        )
 
     campus_ids = set(campuses["dapip_id"])
 
@@ -242,12 +361,56 @@ def validate_data(campuses, records, actions):
 
     if len(record_orphans):
         raise RuntimeError(
-            f"Found {len(record_orphans)} AccreditationRecords orphan rows."
+            f"Found {len(record_orphans)} "
+            "AccreditationRecords orphan rows."
         )
 
     if len(action_orphans):
         raise RuntimeError(
-            f"Found {len(action_orphans)} AccreditationActions orphan rows."
+            f"Found {len(action_orphans)} "
+            "AccreditationActions orphan rows."
+        )
+
+    if accreditors["agency_id"].isna().any():
+        raise RuntimeError(
+            "Accreditors contains a blank AgencyId."
+        )
+
+    if accreditors["agency_name"].isna().any():
+        raise RuntimeError(
+            "Accreditors contains a blank AgencyName."
+        )
+
+    if accreditors["agency_id"].duplicated().any():
+        raise RuntimeError(
+            "Accreditors contains duplicate AgencyId values."
+        )
+
+    if accreditors["agency_name"].duplicated().any():
+        raise RuntimeError(
+            "Accreditors contains duplicate AgencyName values."
+        )
+
+    accreditor_ids = set(accreditors["agency_id"])
+
+    record_agency_orphans = records.loc[
+        ~records["agency_id"].isin(accreditor_ids)
+    ]
+
+    action_agency_orphans = actions.loc[
+        ~actions["agency_id"].isin(accreditor_ids)
+    ]
+
+    if len(record_agency_orphans):
+        raise RuntimeError(
+            f"Found {len(record_agency_orphans)} "
+            "AccreditationRecords rows with unknown AgencyId."
+        )
+
+    if len(action_agency_orphans):
+        raise RuntimeError(
+            f"Found {len(action_agency_orphans)} "
+            "AccreditationActions rows with unknown AgencyId."
         )
 
     print("Validation passed.")
@@ -262,21 +425,28 @@ def copy_dataframe(conn, table_name, df):
         f"FROM STDIN"
     )
 
-    print(f"Loading {len(df):,} rows into {table_name}...")
+    print(
+        f"Loading {len(df):,} rows into {table_name}..."
+    )
 
     with conn.cursor() as cur:
         with cur.copy(sql) as copy:
-            for row in df.itertuples(index=False, name=None):
+            for row in df.itertuples(
+                index=False,
+                name=None,
+            ):
                 clean_row = tuple(
                     None
                     if (
                         value is None
                         or pd.isna(value)
-                        or str(value).strip().lower() in {"", "nan", "nat", "<na>"}
+                        or str(value).strip().lower()
+                        in {"", "nan", "nat", "<na>"}
                     )
                     else str(value).strip()
                     for value in row
                 )
+
                 copy.write_row(clean_row)
 
 
@@ -291,31 +461,65 @@ def main():
     print(f"Workbook: {WORKBOOK}")
     print()
 
-    campuses = load_sheet("InstituteCampuses")
-    records = load_sheet("AccreditationRecords")
-    actions = load_sheet("AccreditationActions")
+    campuses = load_sheet(
+        "InstituteCampuses"
+    )
+
+    records = load_sheet(
+        "AccreditationRecords"
+    )
+
+    actions = load_sheet(
+        "AccreditationActions"
+    )
+
+    accreditors = build_accreditors(
+        records,
+        actions,
+    )
 
     print()
-    print(f"InstituteCampuses:     {len(campuses):,}")
-    print(f"AccreditationRecords:  {len(records):,}")
-    print(f"AccreditationActions:  {len(actions):,}")
+    print(
+        f"InstituteCampuses:     "
+        f"{len(campuses):,}"
+    )
+    print(
+        f"Accreditors:           "
+        f"{len(accreditors):,}"
+    )
+    print(
+        f"AccreditationRecords:  "
+        f"{len(records):,}"
+    )
+    print(
+        f"AccreditationActions:  "
+        f"{len(actions):,}"
+    )
     print()
 
-    validate_data(campuses, records, actions)
+    validate_data(
+        campuses,
+        accreditors,
+        records,
+        actions,
+    )
 
     print("Connecting to PostgreSQL...")
 
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
             print("Creating PostgreSQL schema...")
+
             cur.execute(SCHEMA_SQL)
 
             print("Clearing previous ETL data...")
+
             cur.execute(
                 """
                 TRUNCATE TABLE
                     accreditation_actions,
                     accreditation_records,
+                    accreditors,
                     institute_campuses
                 RESTART IDENTITY CASCADE;
                 """
@@ -325,6 +529,12 @@ def main():
             conn,
             "institute_campuses",
             campuses,
+        )
+
+        copy_dataframe(
+            conn,
+            "accreditors",
+            accreditors,
         )
 
         copy_dataframe(
@@ -340,36 +550,92 @@ def main():
         )
 
         with conn.cursor() as cur:
+            print(
+                "Creating accreditor relationships..."
+            )
+
+            cur.execute(
+                RELATIONSHIP_SQL
+            )
+
             cur.execute(
                 """
                 SELECT
-                    (SELECT COUNT(*) FROM institute_campuses),
-                    (SELECT COUNT(*) FROM accreditation_records),
-                    (SELECT COUNT(*) FROM accreditation_actions);
+                    (
+                        SELECT COUNT(*)
+                        FROM institute_campuses
+                    ),
+                    (
+                        SELECT COUNT(*)
+                        FROM accreditors
+                    ),
+                    (
+                        SELECT COUNT(*)
+                        FROM accreditation_records
+                    ),
+                    (
+                        SELECT COUNT(*)
+                        FROM accreditation_actions
+                    );
                 """
             )
 
-            campus_count, record_count, action_count = cur.fetchone()
+            (
+                campus_count,
+                accreditor_count,
+                record_count,
+                action_count,
+            ) = cur.fetchone()
 
         if campus_count != len(campuses):
-            raise RuntimeError("InstituteCampuses row-count verification failed.")
+            raise RuntimeError(
+                "InstituteCampuses "
+                "row-count verification failed."
+            )
+
+        if accreditor_count != len(accreditors):
+            raise RuntimeError(
+                "Accreditors "
+                "row-count verification failed."
+            )
 
         if record_count != len(records):
-            raise RuntimeError("AccreditationRecords row-count verification failed.")
+            raise RuntimeError(
+                "AccreditationRecords "
+                "row-count verification failed."
+            )
 
         if action_count != len(actions):
-            raise RuntimeError("AccreditationActions row-count verification failed.")
+            raise RuntimeError(
+                "AccreditationActions "
+                "row-count verification failed."
+            )
 
         conn.commit()
 
     print()
     print("ETL COMPLETE")
     print("============")
-    print(f"institute_campuses:     {campus_count:,}")
-    print(f"accreditation_records:  {record_count:,}")
-    print(f"accreditation_actions:  {action_count:,}")
+    print(
+        f"institute_campuses:     "
+        f"{campus_count:,}"
+    )
+    print(
+        f"accreditors:            "
+        f"{accreditor_count:,}"
+    )
+    print(
+        f"accreditation_records:  "
+        f"{record_count:,}"
+    )
+    print(
+        f"accreditation_actions:  "
+        f"{action_count:,}"
+    )
     print()
-    print("PostgreSQL load verified successfully.")
+    print(
+        "PostgreSQL load verified successfully."
+    )
 
 
 if __name__ == "__main__":
