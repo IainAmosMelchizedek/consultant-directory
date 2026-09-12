@@ -32,9 +32,6 @@ const actionsSection =
 const locationsSection =
     document.getElementById("locationsSection");
 
-const spsSection =
-    document.getElementById("spsSection");
-
 const accreditationRecords =
     document.getElementById("accreditationRecords");
 
@@ -356,7 +353,6 @@ async function loadProfile() {
 
         identifiersSection.hidden = false;
         institutionSection.hidden = false;
-        spsSection.hidden = false;
 
 
         // ----------------------------------------------------
