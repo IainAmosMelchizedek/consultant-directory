@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS institute_campuses (
     dapip_id TEXT PRIMARY KEY,
     ope_id TEXT,
     ipeds_unit_ids TEXT,
+    ipeds_control_code TEXT,
+    institution_control TEXT,
     location_name TEXT,
     parent_name TEXT,
     parent_dapip_id TEXT,
@@ -213,6 +215,12 @@ CREATE INDEX IF NOT EXISTS idx_actions_agency
 
 
 ALTER TABLE institute_campuses
+    ADD COLUMN IF NOT EXISTS ipeds_control_code TEXT;
+
+ALTER TABLE institute_campuses
+    ADD COLUMN IF NOT EXISTS institution_control TEXT;
+
+ALTER TABLE institute_campuses
     ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE ipeds_institutions
@@ -299,7 +307,10 @@ SELECT
     admin_email::TEXT AS admin_email,
     fax::TEXT AS fax,
 
-    update_date::TEXT AS update_date
+    update_date::TEXT AS update_date,
+
+    ipeds_control_code::TEXT AS ipeds_control_code,
+    institution_control::TEXT AS institution_control
 
 FROM public.institute_campuses
 
@@ -336,7 +347,10 @@ SELECT
     NULL::TEXT AS admin_email,
     NULL::TEXT AS fax,
 
-    NULL::TEXT AS update_date
+    NULL::TEXT AS update_date,
+
+    NULL::TEXT AS ipeds_control_code,
+    NULL::TEXT AS institution_control
 
 FROM public.accreditors;
 """
@@ -460,6 +474,93 @@ def load_ipeds():
     )
 
     return df
+
+
+def enrich_campuses_with_ipeds_control(campuses, ipeds):
+    print("Enriching campuses with IPEDS institutional control...")
+
+    control_lookup = dict(zip(
+        ipeds["unitid"],
+        ipeds["control_code"],
+    ))
+
+    def direct_control(ipeds_unit_ids):
+        if ipeds_unit_ids is None:
+            return None
+
+        unitids = [
+            value.strip()
+            for value in str(ipeds_unit_ids).split(",")
+            if value.strip()
+        ]
+
+        controls = sorted({
+            control_lookup[unitid]
+            for unitid in unitids
+            if unitid in control_lookup
+        })
+
+        if len(controls) > 1:
+            raise RuntimeError(
+                "A DAPIP record maps to conflicting IPEDS CONTROL values."
+            )
+
+        return controls[0] if controls else None
+
+    enriched = campuses.copy()
+
+    enriched["ipeds_control_code"] = (
+        enriched["ipeds_unit_ids"]
+        .apply(direct_control)
+    )
+
+    direct_count = enriched[
+        "ipeds_control_code"
+    ].notna().sum()
+
+    parent_controls = (
+        enriched.loc[
+            enriched["location_type"].eq("Institution"),
+            ["dapip_id", "ipeds_control_code"],
+        ]
+        .set_index("dapip_id")["ipeds_control_code"]
+        .to_dict()
+    )
+
+    inherited = enriched[
+        "parent_dapip_id"
+    ].map(parent_controls)
+
+    inherit_mask = (
+        enriched["ipeds_control_code"].isna()
+        & enriched["location_type"].ne("Institution")
+        & inherited.notna()
+    )
+
+    enriched.loc[
+        inherit_mask,
+        "ipeds_control_code",
+    ] = inherited[inherit_mask]
+
+    enriched["institution_control"] = (
+        enriched["ipeds_control_code"]
+        .map(IPEDS_CONTROL_LABELS)
+    )
+
+    print(
+        f"Direct IPEDS control matches: "
+        f"{direct_count:,}"
+    )
+    print(
+        f"Inherited from parent:        "
+        f"{inherit_mask.sum():,}"
+    )
+    print(
+        f"Total control classified:     "
+        f"{enriched['institution_control'].notna().sum():,}"
+    )
+
+    return enriched
 
 
 def build_accreditors(records, actions):
@@ -762,6 +863,11 @@ def main():
     )
 
     ipeds = load_ipeds()
+
+    campuses = enrich_campuses_with_ipeds_control(
+        campuses,
+        ipeds,
+    )
 
     accreditors = build_accreditors(
         records,
