@@ -784,21 +784,24 @@ function renderInstitutionResult(row) {
     // Institution profile
     // --------------------------------------------------------
 
-    const profileLink =
-        document.createElement("a");
+    if (row.dapip_id) {
 
-    profileLink.href =
-        `profile.html?dapip_id=${encodeURIComponent(row.dapip_id)}`;
+        const profileLink =
+            document.createElement("a");
 
-    profileLink.textContent =
-        row.record_type === "Institution"
-            ? "View Institution"
-            : "View Location";
+        profileLink.href =
+            `profile.html?dapip_id=${encodeURIComponent(row.dapip_id)}`;
+
+        profileLink.textContent =
+            row.record_type === "Institution"
+                ? "View Institution"
+                : "View Location";
 
 
-    article.appendChild(
-        profileLink
-    );
+        article.appendChild(
+            profileLink
+        );
+    }
 
 
     resultsList.appendChild(

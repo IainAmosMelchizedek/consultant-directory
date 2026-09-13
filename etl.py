@@ -352,7 +352,58 @@ SELECT
     NULL::TEXT AS ipeds_control_code,
     NULL::TEXT AS institution_control
 
-FROM public.accreditors;
+FROM public.accreditors
+
+
+UNION ALL
+
+
+SELECT
+    'institution'::TEXT AS organization_kind,
+    'Institution'::TEXT AS record_type,
+
+    i.unitid::TEXT AS primary_id,
+    i.institution_name::TEXT AS organization_name,
+
+    NULL::TEXT AS parent_name,
+    NULL::TEXT AS parent_id,
+
+    NULL::TEXT AS dapip_id,
+    i.ope_id::TEXT AS ope_id,
+    i.unitid::TEXT AS ipeds_unit_ids,
+
+    NULL::TEXT AS agency_id,
+
+    i.address::TEXT AS address,
+    i.address::TEXT AS street_address,
+    i.city::TEXT AS city,
+    i.state::TEXT AS state,
+    i.zip_code::TEXT AS zip_code,
+    NULL::TEXT AS zip_plus_4,
+
+    i.general_phone::TEXT AS general_phone,
+    i.chief_name::TEXT AS admin_name,
+    NULL::TEXT AS admin_phone,
+    NULL::TEXT AS admin_email,
+    NULL::TEXT AS fax,
+
+    NULL::TEXT AS update_date,
+
+    i.control_code::TEXT AS ipeds_control_code,
+    i.control_label::TEXT AS institution_control
+
+FROM public.ipeds_institutions i
+WHERE i.control_code = '-3'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM public.institute_campuses c
+      WHERE i.unitid = ANY (
+          regexp_split_to_array(
+              COALESCE(c.ipeds_unit_ids, ''),
+              '\\s*,\\s*'
+          )
+      )
+  );
 """
 
 
@@ -535,6 +586,7 @@ def enrich_campuses_with_ipeds_control(campuses, ipeds):
         enriched["ipeds_control_code"].isna()
         & enriched["location_type"].ne("Institution")
         & inherited.notna()
+        & inherited.ne("-3")
     )
 
     enriched.loc[
@@ -1063,9 +1115,22 @@ def main():
                 "row-count verification failed."
             )
 
+        campus_ipeds_ids = {
+            unitid.strip()
+            for value in campuses["ipeds_unit_ids"].dropna()
+            for unitid in str(value).split(",")
+            if unitid.strip()
+        }
+
+        ipeds_only_unclassified_count = (
+            ipeds["control_code"].eq("-3")
+            & ~ipeds["unitid"].isin(campus_ipeds_ids)
+        ).sum()
+
         expected_directory_count = (
             len(campuses)
             + len(accreditors)
+            + int(ipeds_only_unclassified_count)
         )
 
         if (
