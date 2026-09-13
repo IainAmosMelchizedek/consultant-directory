@@ -18,6 +18,12 @@ const institutionSearch =
 const organizationTypeFilter =
     document.getElementById("organizationTypeFilter");
 
+const institutionControlFilter =
+    document.getElementById("institutionControlFilter");
+
+const institutionControlFilterField =
+    document.getElementById("institutionControlFilterField");
+
 const stateFilter =
     document.getElementById("stateFilter");
 
@@ -164,9 +170,11 @@ function updateFilterVisibility() {
 
     if (organizationType === "accreditors") {
 
+        institutionControlFilter.value = "";
         stateFilter.value = "";
         locationTypeFilter.value = "";
 
+        institutionControlFilterField.hidden = true;
         stateFilterField.hidden = true;
         locationTypeFilterField.hidden = true;
 
@@ -174,6 +182,7 @@ function updateFilterVisibility() {
     }
 
 
+    institutionControlFilterField.hidden = false;
     stateFilterField.hidden = false;
     locationTypeFilterField.hidden = false;
 }
@@ -221,6 +230,26 @@ function buildDirectoryParams() {
         params.set(
             "organization_kind",
             "eq.accreditor"
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Institution-only control filter
+    // --------------------------------------------------------
+
+    const institutionControl =
+        institutionControlFilter.value.trim();
+
+
+    if (
+        organizationType !== "accreditors" &&
+        institutionControl
+    ) {
+
+        params.set(
+            "institution_control",
+            `eq.${institutionControl}`
         );
     }
 
@@ -936,6 +965,9 @@ function clearSearch() {
 
     organizationTypeFilter.value =
         "all";
+
+    institutionControlFilter.value =
+        "";
 
     stateFilter.value =
         "";
