@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
 WORKBOOK = BASE_DIR / "data" / "Post2ndarySchools_Working.xlsx"
+IPEDS_SOURCE = BASE_DIR / "data" / "source" / "ipeds" / "hd2024.csv"
 
 load_dotenv(BASE_DIR / ".env")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -121,6 +122,26 @@ CREATE TABLE IF NOT EXISTS institute_campuses (
 );
 
 
+CREATE TABLE IF NOT EXISTS ipeds_institutions (
+    unitid TEXT PRIMARY KEY,
+    institution_name TEXT NOT NULL,
+    ope_id TEXT,
+    address TEXT,
+    city TEXT,
+    state TEXT,
+    zip_code TEXT,
+    general_phone TEXT,
+    web_address TEXT,
+    chief_name TEXT,
+    chief_title TEXT,
+    control_code TEXT NOT NULL,
+    cyactive TEXT,
+    death_year TEXT,
+    closed_date TEXT,
+    control_label TEXT NOT NULL
+);
+
+
 CREATE TABLE IF NOT EXISTS accreditors (
     agency_id TEXT PRIMARY KEY,
     agency_name TEXT NOT NULL UNIQUE
@@ -192,6 +213,9 @@ CREATE INDEX IF NOT EXISTS idx_actions_agency
 
 
 ALTER TABLE institute_campuses
+    ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE ipeds_institutions
     ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE accreditors
@@ -362,6 +386,82 @@ def load_sheet(sheet_name):
     return df
 
 
+# ---------------------------------------------------------
+# IPEDS institutional directory source
+# ---------------------------------------------------------
+
+IPEDS_CONTROL_LABELS = {
+    "1": "Public",
+    "2": "Private nonprofit",
+    "3": "Private for-profit",
+    "-3": "Unclassified",
+}
+
+
+def load_ipeds():
+    print("Reading IPEDS HD2024...")
+
+    columns = [
+        "UNITID",
+        "INSTNM",
+        "OPEID",
+        "ADDR",
+        "CITY",
+        "STABBR",
+        "ZIP",
+        "GENTELE",
+        "WEBADDR",
+        "CHFNM",
+        "CHFTITLE",
+        "CONTROL",
+        "CYACTIVE",
+        "DEATHYR",
+        "CLOSEDAT",
+    ]
+
+    df = pd.read_csv(
+        IPEDS_SOURCE,
+        dtype=str,
+        keep_default_na=False,
+        usecols=columns,
+    )
+
+    df = df.rename(columns={
+        "UNITID": "unitid",
+        "INSTNM": "institution_name",
+        "OPEID": "ope_id",
+        "ADDR": "address",
+        "CITY": "city",
+        "STABBR": "state",
+        "ZIP": "zip_code",
+        "GENTELE": "general_phone",
+        "WEBADDR": "web_address",
+        "CHFNM": "chief_name",
+        "CHFTITLE": "chief_title",
+        "CONTROL": "control_code",
+        "CYACTIVE": "cyactive",
+        "DEATHYR": "death_year",
+        "CLOSEDAT": "closed_date",
+    })
+
+    df = df.map(
+        lambda value: None
+        if (
+            value is None
+            or pd.isna(value)
+            or str(value).strip().lower()
+            in {"", "nan", "nat"}
+        )
+        else str(value).strip()
+    )
+
+    df["control_label"] = df["control_code"].map(
+        IPEDS_CONTROL_LABELS
+    )
+
+    return df
+
+
 def build_accreditors(records, actions):
     print("Building accreditor entities...")
 
@@ -452,11 +552,32 @@ def build_accreditors(records, actions):
 
 def validate_data(
     campuses,
+    ipeds,
     accreditors,
     records,
     actions,
 ):
     print("Validating source data...")
+
+    if ipeds["unitid"].isna().any():
+        raise RuntimeError(
+            "IPEDS contains a blank UNITID."
+        )
+
+    if ipeds["unitid"].duplicated().any():
+        raise RuntimeError(
+            "IPEDS contains duplicate UNITID values."
+        )
+
+    if ipeds["institution_name"].isna().any():
+        raise RuntimeError(
+            "IPEDS contains a blank institution name."
+        )
+
+    if ipeds["control_label"].isna().any():
+        raise RuntimeError(
+            "IPEDS contains an unexpected CONTROL value."
+        )
 
     if campuses["dapip_id"].isna().any():
         raise RuntimeError(
@@ -640,6 +761,8 @@ def main():
         "AccreditationActions"
     )
 
+    ipeds = load_ipeds()
+
     accreditors = build_accreditors(
         records,
         actions,
@@ -650,6 +773,11 @@ def main():
     print(
         f"InstituteCampuses:     "
         f"{len(campuses):,}"
+    )
+
+    print(
+        f"IPEDS Institutions:    "
+        f"{len(ipeds):,}"
     )
 
     print(
@@ -671,6 +799,7 @@ def main():
 
     validate_data(
         campuses,
+        ipeds,
         accreditors,
         records,
         actions,
@@ -704,6 +833,7 @@ def main():
                     accreditation_actions,
                     accreditation_records,
                     accreditors,
+                    ipeds_institutions,
                     institute_campuses
                 RESTART IDENTITY CASCADE;
                 """
@@ -713,6 +843,12 @@ def main():
             conn,
             "institute_campuses",
             campuses,
+        )
+
+        copy_dataframe(
+            conn,
+            "ipeds_institutions",
+            ipeds,
         )
 
         copy_dataframe(
@@ -762,6 +898,10 @@ def main():
                     ),
                     (
                         SELECT COUNT(*)
+                        FROM ipeds_institutions
+                    ),
+                    (
+                        SELECT COUNT(*)
                         FROM accreditors
                     ),
                     (
@@ -781,6 +921,7 @@ def main():
 
             (
                 campus_count,
+                ipeds_count,
                 accreditor_count,
                 record_count,
                 action_count,
@@ -791,6 +932,11 @@ def main():
             raise RuntimeError(
                 "InstituteCampuses "
                 "row-count verification failed."
+            )
+
+        if ipeds_count != len(ipeds):
+            raise RuntimeError(
+                "IPEDS row-count verification failed."
             )
 
         if accreditor_count != len(accreditors):
@@ -834,6 +980,11 @@ def main():
     print(
         f"institute_campuses:     "
         f"{campus_count:,}"
+    )
+
+    print(
+        f"ipeds_institutions:     "
+        f"{ipeds_count:,}"
     )
 
     print(
